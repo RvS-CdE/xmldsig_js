@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>xmldsig_js demo page</title>
+    <link rel="stylesheet" href="./demo/style.css">
+    <script src="./src/pkcs11_hwcrypto.js"></script>
+    <script src="./src/xmldsig_base.js"></script>
+    <script src="./third-party/hwcrypto.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Fira+Mono' rel='stylesheet' type='text/css'>
+  </head>
+  <body>
+    <h1>xmldsig_js demo page</h1>
+    <h3>Input</h3>
+    <div>
+        <p>Text string that will be signed:</p>
+        <textarea id="input_text" name="input_text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        ></textarea>
+    </div>
+    <div>
+        <button id="sign">Sign !</button>
+    </div>
+    <h3>Output</h3>
+    <div>
+        <p>XMLDSig output:</p>
+        <textarea id="output_xmldsig" name="output_xmldsig" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        ></textarea>
+    </div>
+
+    <script>
+    pkcs11_hwcrypto.set({log : true
+                                ,backend : 'npapi'})
+                           .init();
+
+    xmldsig_js.set({log : true
+                   ,pkcs11: pkcs11_hwcrypto
+                   });
+
+    $('#sign').bind("click",function() {
+            var Txt = $('#input_text').val();
+            xmldsig_js.sign(Txt).then(function(XMLDSig)
+                                        {
+                                        $('#output_xmldsig').val(XMLDSig);
+                                        },
+                                       function(error)
+                                        {
+                                        $('#output_xmldsig').val("Error: " + error.msg);
+                                        });
+            });
+    </script>
+  </body>
+</html>
