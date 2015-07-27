@@ -22,3 +22,7 @@ The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid p
 Note to developers:
 -------------------
 Never trust browser-originating content, verify server-side !
+
+Note to self \ TODO's :
+-----------------------
+- Don't forget a single-file minimized container for easy integration.

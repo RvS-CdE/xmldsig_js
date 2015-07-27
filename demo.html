@@ -24,14 +24,15 @@
     <h3>Output</h3>
     <div>
         <p>XMLDSig output:</p>
+
         <textarea id="output_xmldsig" name="output_xmldsig" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
         ></textarea>
     </div>
 
     <script>
     pkcs11_hwcrypto.set({log : true
-                                ,backend : 'npapi'})
-                           .init();
+                        ,backend : 'npapi'})
+                       .init();
 
     xmldsig_js.set({log : true
                    ,pkcs11: pkcs11_hwcrypto
@@ -41,10 +42,11 @@
             var Txt = $('#input_text').val();
             xmldsig_js.sign(Txt).then(function(XMLDSig)
                                         {
-                                        $('#output_xmldsig').val(XMLDSig);
+                                        $('#output_xmldsig').val(XMLDSig.replace(/\n/g, "&#13;&#10;"));
                                         },
                                        function(error)
                                         {
+                                        console.log(error);
                                         $('#output_xmldsig').val("Error: " + error.msg);
                                         });
             });

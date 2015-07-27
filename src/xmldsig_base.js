@@ -13,6 +13,9 @@
                    },
         params = defaults;
 
+    ////////////////////////////////////////////// API
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
     w.xmldsig_js = {set  : set_params
                    ,sign : sign_text
                    };
@@ -35,11 +38,23 @@
         return new Promise(
             function(resolve,reject)
                 {
-                resolve(digest(CleanText));
-                //reject({msg:'Nothing Yet'});
+                try
+                    {
+                    build_xmldsig(RawTxt).then(function(XMLDSig)
+                        {
+                        resolve(XMLDSig);
+                        });
+                    }
+                catch (e)
+                    {
+                    reject(e);
+                    }
                 });
         }
 
+    ////////////////////////// TEST STUFF AND PLUMBING
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
     function digest(Str)
         {
         var buffer = new TextEncoder("utf-8").encode(Str);
@@ -48,7 +63,6 @@
                                     return btoa(hex(hash));
                                     });
         }
-
 
     function hex(buffer) {
         var hexCodes = [];
@@ -68,12 +82,100 @@
         return hexCodes.join("");
         }
 
-
-
     function _log()
         {
         if (params.log && window.console && window.console.log)
             window.console.log.apply(console,arguments)
+        }
+
+    ///////////////////////////////// XMLDSig creation
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    var XML_MASK = '\<?xml version="1.0" encoding="UTF-8"?>\
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">\
+<SignedInfo>\
+  <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />\
+  <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" />\
+  <Reference URI="#object">\
+    <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />\
+    <DigestValue>%DIGEST%</DigestValue>\
+  </Reference>\
+</SignedInfo>\
+<SignatureValue>%SIGNATUREVALUE%</SignatureValue>\
+<KeyInfo>\
+  <KeyValue>\
+    <RSAKeyValue>\
+      <Modulus>%MODULUS%</Modulus>\
+      <Exponent>AQAB</Exponent>\
+    </RSAKeyValue>\
+  </KeyValue>\
+</KeyInfo>\
+<Object Id="object">%OBJECT%</Object>\
+</Signature>';
+
+    var OBJ_CANONICAL_MASK = '<Object xmlns="http://www.w3.org/2000/09/xmldsig#" Id="object">%OBJECT%</Object>';
+
+    var SINFO_CANONICAL_MASK = '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">\
+  <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>\
+  <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256"></SignatureMethod>\
+  <Reference URI="#object">\
+    <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256"></DigestMethod>\
+    <DigestValue>%DIGEST%</DigestValue>\
+  </Reference>\
+</SignedInfo>';
+
+    function build_xmldsig(Text)
+        {
+        _log('I Preparing XMLDSig for ',Text);
+        var CanonicalForm = canonicalize(Text);
+        _log('I Canonical form: ',CanonicalForm);
+        return hash(CanonicalForm).then(function(Digest)
+                                           {
+                                           _log('I Digest: ',Digest);
+                                           var ToSign        = encapsulate(Digest);
+                                           _log('I To Sign:', ToSign);
+                                           return defaults.pkcs11.sign(hash(ToSign),defaults.hashf)
+                                                          .then(function(sign_hex)
+                                                                  {
+                                                                  return {sign_hex:sign_hex,digest:Digest};
+                                                                  });
+                                           })
+                                  .then(function(data)
+                                           {
+                                           var Signature     = btoa(data.sign_hex);
+                                           _log('I Signature:', Signature);
+                                           return compose_xml(Text,data.digest,Signature);
+                                           });
+        }
+
+    function canonicalize(RawText)
+        {
+        // This is very incomplete at this moment
+        var CleanText = RawText.replace(/\r/g,'');
+        return OBJ_CANONICAL_MASK.replace('%OBJECT%',CleanText);
+        }
+
+    function hash(Str)
+        {
+        var buffer = new TextEncoder("utf-8").encode(Str);
+        return crypto.subtle.digest(defaults.hashf, buffer)
+                            .then(function (hashed) {
+                                    return btoa(hex(hashed));
+                                    });
+        }
+
+    function encapsulate(Digest)
+        {
+        return SINFO_CANONICAL_MASK.replace('%DIGEST%',Digest);
+        }
+
+    function compose_xml(RawText,Digest,Signature)
+        {
+        // Work in progress
+        var CleanText = RawText;
+        return XML_MASK.replace('%OBJECT%',CleanText)
+                       .replace('%DIGEST%',Digest)
+                       .replace('%SIGNATUREVALUE%',Signature);
         }
 
     })();

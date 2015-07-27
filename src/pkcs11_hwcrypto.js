@@ -1,16 +1,18 @@
-// xmldsig_js PKCS#11 services provider using the Estonian open-eid effort, hwcrypto.js (great job!)
+// xmldsig_js PKCS#11 services provider using the Estonian open-eid effort, hwcrypto.js
 
 (function()
     {
     var root = this,
         w    = window,
         defaults = {log : false,
+                    lang : 'en',
                     backend : null},
         params = defaults;
 
     w.pkcs11_hwcrypto = {init   : init
-                                ,set    : set_params
-                                };
+                        ,set    : set_params
+                        ,sign   : do_sign
+                        };
 
 
     function init()
@@ -40,6 +42,28 @@
             }
         _log("I Parameters set, current config:",params);
         return this;
+        }
+
+    function do_sign(Base64Hash,Type)
+        {
+        return window.hwcrypto.getCertificate({lang:defaults.lang})
+                     .then(function(cert)
+                               {
+                               var hash = new Uint8Array(4);
+                               return window.hwcrypto.sign(cert,
+                                                           {type: Type, hex: atob(Base64Hash)},
+                                                           {lang: defaults.lang});
+                               },
+                           function(error)
+                               {
+                               _log("E GetCertificate failed: ",error.message);
+                               throw('signature_failed');
+                               })
+                     .then(function(signature) 
+                               {
+                               _log("Signature Successful",signature);
+                               return signature
+                               });
         }
 
     function _log()
