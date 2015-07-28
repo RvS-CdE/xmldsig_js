@@ -145,7 +145,7 @@
                                            })
                                   .then(function(payload)
                                            {
-                                           var Signature = btoa(payload.sign_hex);
+                                           var Signature     = btoa(payload.sign_hex);
                                            _log('I Signature:', Signature);
                                            return compose_xml(compose_object(Text),
 						   	      compose_signedinfo(payload.digest),

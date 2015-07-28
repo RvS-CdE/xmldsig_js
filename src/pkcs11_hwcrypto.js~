@@ -43,11 +43,8 @@
         return this;
         }
 
-    function sign_promise(payload)
+    function sign_promise(Base64Hash,Type)
         {
-	var Base64Hash = payload.base64hash;
-	var Type = payload.digest_alg;
-
         return window.hwcrypto.getCertificate({lang:defaults.lang})
                      .then(function(cert)
                                {
