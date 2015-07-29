@@ -12,6 +12,7 @@
     w.pkcs11_hwcrypto = {init   : init
                         ,set    : set_params
                         ,sign   : sign_promise
+                        ,key    : public_key
                         };
 
 
@@ -45,27 +46,36 @@
 
     function sign_promise(payload)
         {
-	var Base64Hash = payload.base64hash;
-	var Type = payload.digest_alg;
+        var Base64Hash = payload.base64hash;
+        var Type = payload.digest_alg;
 
         return window.hwcrypto.getCertificate({lang:defaults.lang})
-                     .then(function(cert)
+                     .then(function(response)
                                {
                                var hash = new Uint8Array(4);
+                               var cert = response;
+                               var HexHash = atob(Base64Hash);
+                               _log('B64:',Base64Hash, 'Hex:', HexHash,'Type:',Type);
                                return window.hwcrypto.sign(cert,
-                                                           {type: Type, hex: atob(Base64Hash)},
-                                                           {lang: defaults.lang});
+                                                           {type: Type, hex: HexHash},
+                                                           {lang: defaults.lang})
+                                                     .then(function(signature)
+                                                           {
+                                                           _log("Signature Successful",signature);
+                                                           signature.key_hex = cert.hex;
+                                                           return signature;
+                                                           });
                                },
                            function(error)
                                {
                                _log("E GetCertificate failed: ",error.message);
                                throw('signature_failed');
-                               })
-                     .then(function(signature) 
-                               {
-                               _log("Signature Successful",signature);
-                               return signature
                                });
+        }
+
+    function public_key()
+        {
+        return window.hwcrypto.getCertificate({lang:defaults.lang});
         }
 
     function _log()

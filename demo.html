@@ -7,6 +7,10 @@
     <script src="./src/pkcs11_hwcrypto.js"></script>
     <script src="./src/xmldsig_base.js"></script>
     <script src="./third-party/hwcrypto.js"></script>
+    <script src="./third-party/int10.js"></script>
+    <script src="./third-party/hex.js"></script>
+    <script src="./third-party/asn1.js"></script>
+    <script src="./third-party/dom.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
     <link href='https://fonts.googleapis.com/css?family=Fira+Mono' rel='stylesheet' type='text/css'>
   </head>
@@ -42,7 +46,7 @@
             var Txt = $('#input_text').val();
             xmldsig_js.sign(Txt).then(function(XMLDSig)
                                         {
-                                        $('#output_xmldsig').val(XMLDSig.replace(/\n/g, "&#13;&#10;"));
+                                        $('#output_xmldsig').val(XMLDSig);
                                         },
                                        function(error)
                                         {
