@@ -9,7 +9,7 @@
         w    = window,
         defaults = {log : false
                    ,pkcs11 : null
-                   ,hashf  : 'SHA-1'
+                   ,hashf  : 'SHA-256'
                    },
         params = defaults;
 
@@ -68,6 +68,11 @@
 "    </RSAKeyValue>\n"+
 "  </KeyValue>\n"+
 "  <X509Data>\n"+
+"    <X509SubjectName>%SUBJECTNAME%</X509SubjectName>\n"+
+"    <X509IssuerSerial>\n"+
+"      <X509IssuerName>%ISSUERNAME%</X509IssuerName>\n"+
+"      <X509IssuerSerialNumber>%ISSUERSERIAL%</X509IssuerSerialNumber>\n"+
+"    </X509IssuerSerial>\n"+
 "    <X509Certificate>%CERT%</X509Certificate>\n"+
 "  </X509Data>\n"+
 "</KeyInfo>";
@@ -155,14 +160,34 @@
         var Der = Hex.decode(KeyHex);
         var A = ASN1.decode(Der);
         var C = X509_2_json(A);
+        if (C.Certificate.Subject.SerialNumber != null && C.Certificate.Subject.UID == null)
+            C.Certificate.Subject.UID = C.Certificate.Subject.SerialNumber;
+
         _log('Json ASN1',C);
         var Exponent = integer2base64(C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Exponent);
         var RawMod = C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Modulus;
         var CleanMod = RawMod.replace(/^\(.*\)[^0-9]*/,'');
         var Modulus = integer2base64(CleanMod);
         return KEYINFO_MASK.replace('%CERT%',format_b64(hexToBase64(KeyHex),4))
+                           .replace('%ISSUERSERIAL%',C.Certificate.Issuer.SerialNumber)
+                           .replace('%ISSUERNAME%',compose_ldapname(C.Certificate.Issuer))
+                           .replace('%SUBJECTNAME%',compose_ldapname(C.Certificate.Subject))
                            .replace('%EXPONENT%',Exponent)
                            .replace('%MODULUS%',format_b64(Modulus,6));
+        }
+
+    function compose_ldapname(D)
+        {
+        console.log(D);
+        var Out = [];
+        var Check = ['CN','L','ST','O','OU','C','STREET','DC','UID'];
+        for (var i=0,l=Check.length;i<l;i++)
+            {
+            var el = Check[i];
+            if (D.hasOwnProperty(el))
+                Out.push(el+'='+D[el].replace(/,/g,'\,'));
+            }
+        return Out.join(',');
         }
 
     function compose_xml(Obj,SignedInfo,KeyInfo,Signature)
