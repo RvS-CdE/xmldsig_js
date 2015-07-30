@@ -54,7 +54,7 @@
                                {
                                var hash = new Uint8Array(4);
                                var cert = response;
-                               var HexHash = atob(Base64Hash);
+                               var HexHash = base64ToHex(Base64Hash).toUpperCase();
                                _log('B64:',Base64Hash, 'Hex:', HexHash,'Type:',Type);
                                return window.hwcrypto.sign(cert,
                                                            {type: Type, hex: HexHash},
@@ -76,6 +76,19 @@
     function public_key()
         {
         return window.hwcrypto.getCertificate({lang:defaults.lang});
+        }
+
+    // Inspiration:
+    // http://stackoverflow.com/questions/23190056/hex-to-base64-converter-for-javascript
+    function base64ToHex(str) 
+        {
+        for (var i = 0, bin = atob(str.replace(/[ \r\n]+$/, "")), hex = []; i < bin.length; ++i) 
+            {
+            var tmp = bin.charCodeAt(i).toString(16);
+            if (tmp.length === 1) tmp = "0" + tmp;
+            hex[hex.length] = tmp;
+            }
+        return hex.join('');
         }
 
     function _log()

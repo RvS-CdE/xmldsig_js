@@ -9,9 +9,7 @@
         w    = window,
         defaults = {log : false
                    ,pkcs11 : null
-                   ,hashf  : 'SHA-256'
-                   ,xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
-                   ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha256"
+                   ,hashf  : 'SHA-1'
                    },
         params = defaults;
 
@@ -41,38 +39,51 @@
     ///////////////////////////////// XMLDSig creation
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
-    var XML_MASK = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
-<Signature %PROP%>\n\
-%SIGNEDINFO%\n\
-<SignatureValue>%SIGNATUREVALUE%</SignatureValue>\n\
-%KEYINFO%\n\
-%OBJECT%\n\
-</Signature>";
+    var XML_MASK = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+"<Signature %PROP%>\n"+
+"%SIGNEDINFO%\n"+
+"<SignatureValue>%SIGNATUREVALUE%</SignatureValue>\n"+
+"%KEYINFO%\n"+
+"%OBJECT%\n"+
+"</Signature>";
 
     var XML_PROP = 'xmlns="http://www.w3.org/2000/09/xmldsig#"';
 
     var OBJ_MASK = "<Object%PROP% Id=\"object\">%OBJECT%</Object>";
 
-    var SINFO_MASK = "<SignedInfo%PROP%>\n\
-  <CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\" />\n\
-  <SignatureMethod Algorithm=\"%SIGN_ALGO%\" />\n\
-  <Reference URI=\"#object\">\n\
-    <DigestMethod Algorithm=\"%DIGEST_ALGO%\" />\n\
-    <DigestValue>%DIGEST%</DigestValue>\n\
-  </Reference>\n\
-</SignedInfo>";
+    var SINFO_MASK = "<SignedInfo%PROP%>\n"+
+"  <CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></CanonicalizationMethod>\n"+
+"  <SignatureMethod Algorithm=\"%SIGN_ALGO%\"></SignatureMethod>\n"+
+"  <Reference URI=\"#object\">\n"+
+"    <DigestMethod Algorithm=\"%DIGEST_ALGO%\"></DigestMethod>\n"+
+"    <DigestValue>%DIGEST%</DigestValue>\n"+
+"  </Reference>\n"+
+"</SignedInfo>";
 
-    var KEYINFO_MASK = "<KeyInfo>\n\
-  <KeyValue>\n\
-    <RSAKeyValue>\n\
-      <Modulus>%MODULUS%</Modulus>\n\
-      <Exponent>%EXPONENT%</Exponent>\n\
-    </RSAKeyValue>\n\
-  </KeyValue>\n\
-  <X509Data>\n\
-    <X509Certificate>%CERT%</X509Certificate>\n\
-  </X509Data>\n\
-</KeyInfo>";
+    var KEYINFO_MASK = "<KeyInfo>\n"+
+"  <KeyValue>\n"+
+"    <RSAKeyValue>\n"+
+"      <Modulus>%MODULUS%</Modulus>\n"+
+"      <Exponent>%EXPONENT%</Exponent>\n"+
+"    </RSAKeyValue>\n"+
+"  </KeyValue>\n"+
+"  <X509Data>\n"+
+"    <X509Certificate>%CERT%</X509Certificate>\n"+
+"  </X509Data>\n"+
+"</KeyInfo>";
+
+    var HashSettings = {'SHA-256' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha256"}
+                       ,'SHA-1'    : {xmldigest_signalgo   : "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2000/09/xmldsig#sha1"}
+                       ,'SHA-512' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha512"}
+                       ,'SHA-384' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha384"}
+                       ,'SHA-224' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha224"
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha224"}
+                       };
+
 
     function build_xmldsig(Text)
         {
@@ -96,6 +107,7 @@
                        var PKCS11_payload = {'base64hash' : payload.sign_digest
                                             ,'digest_alg' : defaults.hashf};
 
+                       _log('PKCS11 Payload',PKCS11_payload);
                        return defaults.pkcs11.sign(PKCS11_payload)
                                       .then(function(signature)
                                               {
@@ -106,7 +118,7 @@
                        })
                   .then(function(payload)
                        {
-                       var Signature = btoa(payload.sign_hex);
+                       var Signature = hexToBase64(payload.sign_hex);
                        _log('I Signature:', Signature);
                        return compose_xml(compose_object(Text)
                                          ,compose_signedinfo(payload.digest)
@@ -119,11 +131,11 @@
         {
         // This is very incomplete at this moment
         var Canonical = Canonical || false;
-            var CleanText = Canonical ? RawText.replace(/\r/g,'') : RawText;
+        var CleanText = Canonical ? RawText.replace(/\r/g,'') : RawText;
         var ExtProp = Canonical ? ' ' + XML_PROP : '';
 
         return OBJ_MASK.replace('%OBJECT%',CleanText)
-                     .replace('%PROP%',ExtProp);
+                       .replace('%PROP%',ExtProp);
         }
 
     function compose_signedinfo(Digest,Canonical)
@@ -132,9 +144,9 @@
         var ExtProp = Canonical ? ' ' + XML_PROP : '';
 
         return SINFO_MASK.replace('%DIGEST%',Digest)
-                 .replace('%SIGN_ALGO%',defaults.xmldigest_signalgo)
-                 .replace('%DIGEST_ALGO%',defaults.xmldigest_digestalgo)
-                       .replace('%PROP%',ExtProp);
+                         .replace('%SIGN_ALGO%',HashSettings[defaults.hashf].xmldigest_signalgo)
+                         .replace('%DIGEST_ALGO%',HashSettings[defaults.hashf].xmldigest_digestalgo)
+                         .replace('%PROP%',ExtProp);
         }
 
     function compose_keyinfo(KeyHex)
@@ -148,9 +160,9 @@
         var RawMod = C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Modulus;
         var CleanMod = RawMod.replace(/^\(.*\)[^0-9]*/,'');
         var Modulus = integer2base64(CleanMod);
-        return KEYINFO_MASK.replace('%CERT%',btoa(KeyHex))
+        return KEYINFO_MASK.replace('%CERT%',format_b64(hexToBase64(KeyHex),4))
                            .replace('%EXPONENT%',Exponent)
-                           .replace('%MODULUS%',Modulus);
+                           .replace('%MODULUS%',format_b64(Modulus,6));
         }
 
     function compose_xml(Obj,SignedInfo,KeyInfo,Signature)
@@ -159,7 +171,7 @@
         return XML_MASK.replace('%OBJECT%',Obj)
                        .replace('%SIGNEDINFO%',SignedInfo)
                        .replace('%KEYINFO%',KeyInfo)
-                       .replace('%SIGNATUREVALUE%',Signature)
+                       .replace('%SIGNATUREVALUE%',format_b64(Signature))
                        .replace('%PROP%',XML_PROP);
         }
 
@@ -169,7 +181,7 @@
 
         return crypto.subtle.digest(defaults.hashf, buffer)
                             .then(function (hashed) {
-                                    return btoa(hex(hashed));
+                                    return hexToBase64(hex(hashed));
                                     });
         }
 
@@ -203,6 +215,27 @@
     function integer2base64(IntStr)
         {
         return hexToBase64(dec2hex(IntStr));
+        }
+
+    function format_b64(RawIn,Indent)
+        {
+        var Out = [], buffer = [], pos=0;
+        var Indent = Indent || 0;
+        var Prefix = new Array(Indent + 1).join(' ');
+        var In = RawIn.split('').reverse();
+        while (In.length)
+            {
+            buffer.push(In.pop());
+            if (buffer.length == 64)
+                {
+                Out.push(Prefix + buffer.join(''));
+                buffer = [];
+                }
+            }
+        if (buffer.length > 0)
+            Out.push(Prefix + buffer.join(''));
+
+        return Out.join("\n").trim();
         }
 
     // Inspiration:
