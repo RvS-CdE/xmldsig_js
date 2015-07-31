@@ -101,6 +101,8 @@ HcGpBgXTFydUecG+MjeQ0Q==</SignatureValue>
 <Object Id="object">Your Text</Object>
 </Signature>
 ```
+The resulting certificate can be [verified here](https://www.aleksey.com/xmlsec/xmldsig-verifier.html).
+
 ## pkcs11\_hwcrypto.js requirements ##
 The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid project provides add-ons for Firefox, Chrome, and Safari should work as well. These extensions should be available in each of the browser's extension stores. IE11 (aka edge) should have support in the future. Older IE versions can also be supported but need more work (such as using a promises polyfill for missing javascript functionality).
 
