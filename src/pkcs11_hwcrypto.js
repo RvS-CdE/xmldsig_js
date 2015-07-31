@@ -15,7 +15,6 @@
                         ,certificate : get_cert
                         };
 
-
     function init()
         {
         if (!window.hwcrypto)
@@ -61,28 +60,6 @@
                                     _log("I Signature Successful",signature);
                                     return signature;
                                     });
-        //return window.hwcrypto.getCertificate({lang:defaults.lang})
-        //             .then(function(response)
-        //                       {
-        //                       var hash = new Uint8Array(4);
-        //                       var cert = response;
-        //                       var HexHash = base64ToHex(Base64Hash).toUpperCase();
-        //                       _log('B64:',Base64Hash, 'Hex:', HexHash,'Type:',Type);
-        //                       return window.hwcrypto.sign(cert,
-        //                                                   {type: Type, hex: HexHash},
-        //                                                   {lang: defaults.lang})
-        //                                             .then(function(signature)
-        //                                                   {
-        //                                                   _log("Signature Successful",signature);
-        //                                                   signature.key_hex = cert.hex;
-        //                                                   return signature;
-        //                                                   });
-        //                       },
-        //                   function(error)
-        //                       {
-        //                       _log("E GetCertificate failed: ",error.message);
-        //                       throw('signature_failed');
-        //                       });
         }
 
     function get_cert()
