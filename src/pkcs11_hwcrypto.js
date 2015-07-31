@@ -12,7 +12,7 @@
     w.pkcs11_hwcrypto = {init   : init
                         ,set    : set_params
                         ,sign   : sign_promise
-                        ,key    : public_key
+                        ,certificate : get_cert
                         };
 
 
@@ -35,6 +35,9 @@
 
     function set_params(P)
         {
+        if (P.backend != null && P.backend != "chrome" && P.backend != "npapi")
+            throw "pcks11_bad_backend";
+
         for (var key in P)
             {
             if (P.hasOwnProperty(key))
@@ -46,36 +49,50 @@
 
     function sign_promise(payload)
         {
-        var Base64Hash = payload.base64hash;
         var Type = payload.digest_alg;
+        var cert = payload.cert;
+        var HexHash = base64ToHex(payload.base64hash).toUpperCase();
 
-        return window.hwcrypto.getCertificate({lang:defaults.lang})
-                     .then(function(response)
-                               {
-                               var hash = new Uint8Array(4);
-                               var cert = response;
-                               var HexHash = base64ToHex(Base64Hash).toUpperCase();
-                               _log('B64:',Base64Hash, 'Hex:', HexHash,'Type:',Type);
-                               return window.hwcrypto.sign(cert,
-                                                           {type: Type, hex: HexHash},
-                                                           {lang: defaults.lang})
-                                                     .then(function(signature)
-                                                           {
-                                                           _log("Signature Successful",signature);
-                                                           signature.key_hex = cert.hex;
-                                                           return signature;
-                                                           });
-                               },
-                           function(error)
-                               {
-                               _log("E GetCertificate failed: ",error.message);
-                               throw('signature_failed');
-                               });
+        return window.hwcrypto.sign(cert,
+                                    {type: Type, hex: HexHash},
+                                    {lang: defaults.lang})
+                              .then(function(signature)
+                                    {
+                                    _log("I Signature Successful",signature);
+                                    return signature;
+                                    });
+        //return window.hwcrypto.getCertificate({lang:defaults.lang})
+        //             .then(function(response)
+        //                       {
+        //                       var hash = new Uint8Array(4);
+        //                       var cert = response;
+        //                       var HexHash = base64ToHex(Base64Hash).toUpperCase();
+        //                       _log('B64:',Base64Hash, 'Hex:', HexHash,'Type:',Type);
+        //                       return window.hwcrypto.sign(cert,
+        //                                                   {type: Type, hex: HexHash},
+        //                                                   {lang: defaults.lang})
+        //                                             .then(function(signature)
+        //                                                   {
+        //                                                   _log("Signature Successful",signature);
+        //                                                   signature.key_hex = cert.hex;
+        //                                                   return signature;
+        //                                                   });
+        //                       },
+        //                   function(error)
+        //                       {
+        //                       _log("E GetCertificate failed: ",error.message);
+        //                       throw('signature_failed');
+        //                       });
         }
 
-    function public_key()
+    function get_cert()
         {
-        return window.hwcrypto.getCertificate({lang:defaults.lang});
+        return window.hwcrypto.getCertificate({lang:defaults.lang})
+                              .then(function(resp)
+                                    {
+                                    return {hex : resp.hex
+                                           ,raw : resp};
+                                    });
         }
 
     // Inspiration:

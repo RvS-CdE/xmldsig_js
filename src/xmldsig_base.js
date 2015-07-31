@@ -22,6 +22,9 @@
 
     function set_params(P)
         {
+        if (P.hashf != null && HashSettings[P.hashf] == null)
+            throw 'xmldsig_hash_function_not_defined';
+
         for (var key in P)
             {
             if (P.hasOwnProperty(key))
@@ -33,7 +36,11 @@
 
     function xmldsig_promise(RawText)
         {
-        return build_xmldsig(RawText)
+        assert_only_unicode(RawText);
+        if (params.pkcs11 == null)
+            throw 'xmldsig_no_pkcs11_defined'
+
+        return build_xmldsig(RawText);
         }
 
     ///////////////////////////////// XMLDSig creation
@@ -84,9 +91,9 @@
                        ,'SHA-512' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
                                     ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha512"}
                        ,'SHA-384' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
-                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha384"}
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmldsig-more#sha384"}
                        ,'SHA-224' : {xmldigest_signalgo   : "http://www.w3.org/2001/04/xmldsig-more#rsa-sha224"
-                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmlenc#sha224"}
+                                    ,xmldigest_digestalgo : "http://www.w3.org/2001/04/xmldsig-more#sha224"}
                        };
 
 
@@ -95,13 +102,53 @@
         _log('I Preparing XMLDSig for ',Text);
         var CanonicalForm = compose_object(Text,true);
         _log('I Canonical form: ',CanonicalForm);
-        return hash_promise(CanonicalForm).then(function(Digest)
+
+        return defaults.pkcs11.certificate().then(function(Cert)
+                        {
+                        var A = ASN1.decode(Hex.decode(Cert.hex));
+                        var C = X509_2_json(A);
+                        if (C.Certificate.Subject.SerialNumber != null && C.Certificate.Subject.UID == null)
+                            C.Certificate.Subject.UID = C.Certificate.Subject.SerialNumber;
+
+                        var KeyMatch = C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Modulus.match(/\(([0-9]+).*\)/);
+                        var HashF = defaults.hashf;
+                        var SignF = defaults.hashf
+
+                        if (KeyMatch[1] != null)
+                            {
+                            // Downgrade hash to 224 for 1024 bit keys
+                            if (KeyMatch[1] == '1024' && HashF != 'SHA-1')
+                                {
+                                _log('W Downgraded signature hash function to SHA-1: 1024 bit key detected, crypto.subtle does not support SHA-224');
+                                SignF = 'SHA-1';
+                                HashF = 'SHA-1';
+                                }
+                            }
+
+                        var payload = {'cert_raw' : Cert.raw
+                                      ,'cert_hex' : Cert.hex
+                                      ,'cert_json': C
+                                      ,'keyLength': KeyMatch[1] != null ? KeyMatch[1] : 'unknown'
+                                      ,'hashf'    : HashF
+                                      ,'signf'    : SignF};
+
+                        _log('I Initalizing payload: ',payload);
+
+                        return hash_promise(CanonicalForm,payload.hashf).then(function(Digest)
+                                            {
+                                            payload.digest = Digest;
+                                            return payload;
+                                            });
+                        },function(err)
+                        {
+                        _log('E get certificate failed',err);
+                        throw('xmldsig_failed_cert_retrieval');
+                        })
+                   .then(function(payload)
                        {
-                       _log('I Digest: ',Digest);
-                       var ToSign = compose_signedinfo(Digest, true);
+                       var ToSign = compose_signedinfo(payload.digest, true,payload.hashf,payload.signf);
                        _log('I To Sign:', ToSign);
-                       var payload = {'digest' : Digest};
-                       return hash_promise(ToSign).then(function(signedinfo_digest)
+                       return hash_promise(ToSign,payload.hashf).then(function(signedinfo_digest)
                                               {
                                               payload.sign_digest = signedinfo_digest;
                                               return payload
@@ -110,14 +157,14 @@
                   .then(function(payload)
                        {
                        var PKCS11_payload = {'base64hash' : payload.sign_digest
-                                            ,'digest_alg' : defaults.hashf};
+                                            ,'digest_alg' : payload.signf
+                                            ,'cert'   : payload.cert_raw};
 
-                       _log('PKCS11 Payload',PKCS11_payload);
+                       _log('I PKCS11 Payload',PKCS11_payload);
                        return defaults.pkcs11.sign(PKCS11_payload)
                                       .then(function(signature)
                                               {
                                               payload.sign_hex = signature.hex;
-                                              payload.key_hex  = signature.key_hex;
                                               return payload
                                               });
                        })
@@ -126,8 +173,8 @@
                        var Signature = hexToBase64(payload.sign_hex);
                        _log('I Signature:', Signature);
                        return compose_xml(compose_object(Text)
-                                         ,compose_signedinfo(payload.digest)
-                                         ,compose_keyinfo(payload.key_hex)
+                                         ,compose_signedinfo(payload.digest,false,payload.hashf,payload.signf)
+                                         ,compose_keyinfo(payload.cert_json,payload.cert_hex)
                                          ,Signature);
                        });
         }
@@ -136,34 +183,27 @@
         {
         // This is very incomplete at this moment
         var Canonical = Canonical || false;
-        var CleanText = Canonical ? RawText.replace(/\r/g,'') : RawText;
+        //var CleanText = Canonical ? c14n_text(RawText) : RawText;
+        var CleanText = c14n_text(RawText);
         var ExtProp = Canonical ? ' ' + XML_PROP : '';
 
         return OBJ_MASK.replace('%OBJECT%',CleanText)
                        .replace('%PROP%',ExtProp);
         }
 
-    function compose_signedinfo(Digest,Canonical)
+    function compose_signedinfo(Digest,Canonical,HashF,SignF)
         {
         var Canonical = Canonical || false;
         var ExtProp = Canonical ? ' ' + XML_PROP : '';
 
         return SINFO_MASK.replace('%DIGEST%',Digest)
-                         .replace('%SIGN_ALGO%',HashSettings[defaults.hashf].xmldigest_signalgo)
-                         .replace('%DIGEST_ALGO%',HashSettings[defaults.hashf].xmldigest_digestalgo)
+                         .replace('%SIGN_ALGO%',HashSettings[SignF].xmldigest_signalgo)
+                         .replace('%DIGEST_ALGO%',HashSettings[HashF].xmldigest_digestalgo)
                          .replace('%PROP%',ExtProp);
         }
 
-    function compose_keyinfo(KeyHex)
+    function compose_keyinfo(C,KeyHex)
         {
-        _log('Key Hex',KeyHex);
-        var Der = Hex.decode(KeyHex);
-        var A = ASN1.decode(Der);
-        var C = X509_2_json(A);
-        if (C.Certificate.Subject.SerialNumber != null && C.Certificate.Subject.UID == null)
-            C.Certificate.Subject.UID = C.Certificate.Subject.SerialNumber;
-
-        _log('Json ASN1',C);
         var Exponent = integer2base64(C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Exponent);
         var RawMod = C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Modulus;
         var CleanMod = RawMod.replace(/^\(.*\)[^0-9]*/,'');
@@ -185,7 +225,7 @@
             {
             var el = Check[i];
             if (D.hasOwnProperty(el))
-                Out.push(el+'='+D[el].replace(/,/g,'\,'));
+                Out.push(el+'='+c14n_text(D[el].replace(/,/g,'\,')));
             }
         return Out.join(',');
         }
@@ -200,11 +240,12 @@
                        .replace('%PROP%',XML_PROP);
         }
 
-    function hash_promise(Str)
+    function hash_promise(Str,HashF)
         {
+        console.log(HashF);
         var buffer = new TextEncoder("utf-8").encode(Str);
 
-        return crypto.subtle.digest(defaults.hashf, buffer)
+        return crypto.subtle.digest(HashF, buffer)
                             .then(function (hashed) {
                                     return hexToBase64(hex(hashed));
                                     });
@@ -261,6 +302,28 @@
             Out.push(Prefix + buffer.join(''));
 
         return Out.join("\n").trim();
+        }
+
+    function c14n_text(Str)
+        {
+        Str = Str.replace(/\r/g,'');
+        Str = Str.replace(/&/g,'&amp;');
+        Str = Str.replace(/</g,'&lt;');
+        Str = Str.replace(/>/g,'&gt;');
+        //Str = Str.replace(/"/g,'&quot;');
+        //Str = Str.replace(/'/g,'&apos;');
+        return Str;
+        }
+
+    function assert_only_unicode(Str)
+        {
+        try {
+            encodeURIComponent(Str)
+            }
+        catch(e)
+            {
+            throw('xmldsig_bad_input_string_encoding');
+            }
         }
 
     // Inspiration:
@@ -345,7 +408,7 @@
             return Out;
             }
 
-        _log('Sequence fail to jsonize:',S);
+        _log('E Sequence fail to jsonize:',S);
         return "Sequence case not defined";
         }
 
