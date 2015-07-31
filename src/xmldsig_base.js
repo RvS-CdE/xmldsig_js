@@ -38,7 +38,7 @@
         {
         assert_only_unicode(RawText);
         if (params.pkcs11 == null)
-            throw 'xmldsig_no_pkcs11_defined'
+            throw 'xmldsig_no_pkcs11_defined';
 
         return build_xmldsig(RawText);
         }
@@ -112,7 +112,7 @@
 
                         var KeyMatch = C.Certificate.SubjectPublicKeyInfo.SubjectPublicKey.Modulus.match(/\(([0-9]+).*\)/);
                         var HashF = defaults.hashf;
-                        var SignF = defaults.hashf
+                        var SignF = defaults.hashf;
 
                         if (KeyMatch[1] != null)
                             {
@@ -260,12 +260,12 @@
         for (var i = 0; i < view.byteLength; i += 4) 
             {
             // Using getUint32 reduces the number of iterations needed (we process 4 bytes each time)
-            var value = view.getUint32(i)
+            var value = view.getUint32(i);
             // toString(16) will give the hex representation of the number without padding
-            var stringValue = value.toString(16)
+            var stringValue = value.toString(16);
             // We use concatenation and slice for padding
-            var padding = '00000000'
-            var paddedValue = (padding + stringValue).slice(-padding.length)
+            var padding = '00000000';
+            var paddedValue = (padding + stringValue).slice(-padding.length);
             hexCodes.push(paddedValue);
             }
         // Join all the hex strings into one
@@ -398,7 +398,7 @@
 
         if (S.sub[0].typeName() == 'SET')
             {
-            var Out = {}
+            var Out = {};
             for (var i=0,l=S.sub.length;i<l;i++)
                 {
                 var Temp = sequence_2_json(S.sub[i]);
@@ -470,7 +470,7 @@
                   ,'2.5.4.8'  : 'S'
                   ,'2.5.4.6'  : 'C'
                   ,'2.5.4.5'  : 'SerialNumber'
-                  }
+                  };
 
     function cert_has_version(A)
         {
