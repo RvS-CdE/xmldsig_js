@@ -23,13 +23,8 @@ The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid p
 Besides including the necessary files (see demo.html for working example):
 
 ```javascript
-pkcs11_hwcrypto.set({log : true
-                    ,backend : null})
-                   .init();
-
-xmldsig_js.set({log : true
-               ,pkcs11: pkcs11_hwcrypto
-               });
+pkcs11_hwcrypto.init();
+xmldsig_js.set({pkcs11: pkcs11_hwcrypto});
 
 var xmldsig_promise = xmldsig_js.sign("Your Text");
 ```
