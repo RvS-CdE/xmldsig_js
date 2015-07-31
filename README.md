@@ -22,17 +22,17 @@ The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid p
 # How to use ?#
 Besides including the necessary files (see demo.html for working example):
 
-    ```javascript
-    pkcs11_hwcrypto.set({log : true
-                        ,backend : null})
-                       .init();
+```javascript
+pkcs11_hwcrypto.set({log : true
+                    ,backend : null})
+                   .init();
 
-    xmldsig_js.set({log : true
-                   ,pkcs11: pkcs11_hwcrypto
-                   });
+xmldsig_js.set({log : true
+               ,pkcs11: pkcs11_hwcrypto
+               });
 
-    var xmldsig_promise = xmldsig_js.sign("Your Text");
-    ```
+var xmldsig_promise = xmldsig_js.sign("Your Text");
+```
 
 # What does the result look like ?#
 XML-Dsig signature with accented characters, signed with a belgian eID card:
