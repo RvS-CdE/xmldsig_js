@@ -21,6 +21,10 @@ pkcs11_hwcrypto.init();
 xmldsig_js.set({pkcs11: pkcs11_hwcrypto});
 
 var xmldsig_promise = xmldsig_js.sign("Your Text");
+xmldsig_promise.then(function(Xmldsig)
+                        {
+                        dosomething(Xmldsig);
+                        });
 ```
 
 # What does the result look like ?#
