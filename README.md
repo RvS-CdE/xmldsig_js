@@ -13,12 +13,6 @@ The current module is based on the Estonian open-eID effort, hwcrypto.js, which 
 
 Other basic crypto functionalites are provided by the web.crypto API standardized by the W3C and currently implemented by the browser vendors.
 
-# INSTALL / USE #
-Link the `xmldsig_base.js` and the pkcs#11 module (currently `pkcs11_hwcrypto.js`, see further requirements below) in your `HTML` page, set the different parameters and you're good to go (see `DEMO.html` for a fast & easy example).  
-
-## pkcs11\_hwcrypto.js requirements ##
-The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid project provides add-ons for Firefox, Chrome, and Safari should work as well. These extensions should be available in each of the browser's extension stores. IE11 (aka edge) should have support in the future. Older IE versions can also be supported but need more work (such as using a promises polyfill for missing javascript functionality).
-
 # How to use ?#
 Besides including the necessary files (see demo.html for working example):
 
@@ -107,6 +101,9 @@ fuvzEV2c+8v1vjkfNy6+ew==</SignatureValue>
 <Object Id="object">élève, Zürich, île de croÿ, État, garçon, Œillet</Object>
 </Signature>
 ```
+## pkcs11\_hwcrypto.js requirements ##
+The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid project provides add-ons for Firefox, Chrome, and Safari should work as well. These extensions should be available in each of the browser's extension stores. IE11 (aka edge) should have support in the future. Older IE versions can also be supported but need more work (such as using a promises polyfill for missing javascript functionality).
+
 
 Note to developers:
 -------------------
