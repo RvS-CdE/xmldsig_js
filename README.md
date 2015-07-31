@@ -19,9 +19,25 @@ Link the `xmldsig_base.js` and the pkcs#11 module (currently `pkcs11_hwcrypto.js
 ## pkcs11\_hwcrypto.js requirements ##
 The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid project provides add-ons for Firefox, Chrome, and Safari should work as well. These extensions should be available in each of the browser's extension stores. IE11 (aka edge) should have support in the future. Older IE versions can also be supported but need more work (such as using a promises polyfill for missing javascript functionality).
 
-# What does it look like ?#
+# How to use ?#
+Besides including the necessary files (see demo.html for working example):
+
+    ```javascript
+    pkcs11_hwcrypto.set({log : true
+                        ,backend : null})
+                       .init();
+
+    xmldsig_js.set({log : true
+                   ,pkcs11: pkcs11_hwcrypto
+                   });
+
+    var xmldsig_promise = xmldsig_js.sign("Your Text");
+    ```
+
+# What does the result look like ?#
 XML-Dsig signature with accented characters, signed with a belgian eID card:
 
+    ```xml
     <?xml version="1.0" encoding="UTF-8"?>
     <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
     <SignedInfo>
@@ -95,6 +111,7 @@ XML-Dsig signature with accented characters, signed with a belgian eID card:
     </KeyInfo>
     <Object Id="object">élève, Zürich, île de croÿ, État, garçon, Œillet</Object>
     </Signature>
+    ```
 
 Note to developers:
 -------------------
