@@ -34,15 +34,15 @@ XML-Dsig signature with accented characters, signed with a belgian eID card:
   <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>
   <Reference URI="#object">
     <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
-    <DigestValue>rlkdDhodcyItp3il2odnrnCAUa9GIJFUaBsR6YH3Gm4=</DigestValue>
+    <DigestValue>rvb+z3l1XwG3+YHrAYksBd2ihLHyDG9VgosZ4+hcU08=</DigestValue>
   </Reference>
 </SignedInfo>
-<SignatureValue>huvTdMOBrVip69l3ukvfcuJE2OxCRHshefb6RD1e9BL7wkJOWzWWh2Bh4I8XV7fB
-OKwWFFStlZXnERzE6zGgSMfeyZ/nrvJrjLj/sMzkiLcvaAo5eZkPmM/UvkPHOOzS
-xhyt+cjrt9lAcH/f6ItjeuOdkJrYLOhwM7pCEyFPaGxZAflc/nLLHUg8kyN7Mg44
-oB6MYYso3gRAatrPaDM5aKLrQNg1Nhi2GdP+OSBPZuLFJEZKO5wXjF0rSBQSTUWq
-XGevBlPtu3GenDhg3nvH4ORHK+38xmK3D8ZED1RNEHsUlQvT/UHBqhDjIcpLUdz2
-fuvzEV2c+8v1vjkfNy6+ew==</SignatureValue>
+<SignatureValue>E7jKkRl1cbHGcHbB3WXkKPtWGhA1nyS8V3ifnQes7hS8oz4W/1blrrmRQhuYQeQE
+DEZ4s1EXZjgMUuYGNbMzUhsrFOcR6gLPFPBQ6uOoBgn9tBS2ZF6C4EkQWFCVy+Nc
+g4LPrN6moysut1KRTFBPwZKWl0cmlL61KrKkljd+t1YI6nSzYLQdy/YVwlj0x3A2
+gGVEyG04UNff2bSgZjH/MnSaheDgXuJrJHerUESpnjqPH9sE6ts3+KreuDgpiOoP
+a7NaRBbK2EakGq3oq4wwzQYCUa18yfmFc6Y0GAw2/LbbWDxr/29kdqL2s7C6EcXM
+HcGpBgXTFydUecG+MjeQ0Q==</SignatureValue>
 <KeyInfo>
   <KeyValue>
     <RSAKeyValue>
@@ -98,7 +98,7 @@ fuvzEV2c+8v1vjkfNy6+ew==</SignatureValue>
     99HbPko9fCwGU5mx+c4q</X509Certificate>
   </X509Data>
 </KeyInfo>
-<Object Id="object">élève, Zürich, île de croÿ, État, garçon, Œillet</Object>
+<Object Id="object">Your Text</Object>
 </Signature>
 ```
 ## pkcs11\_hwcrypto.js requirements ##
