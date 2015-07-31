@@ -24,7 +24,7 @@ var xmldsig_promise = xmldsig_js.sign("Your Text");
 ```
 
 # What does the result look like ?#
-XML-Dsig signature, signed with a belgian eID card:
+XML-Dsig signature, signed with a belgian eID card (X509 certificate stripped out):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
