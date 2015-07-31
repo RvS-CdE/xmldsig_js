@@ -1,8 +1,8 @@
 # xmldsig\_js
-No-frills XMLDSig javascript implementation.
+No-frills XML_Dsig javascript implementation.
 
 ## No-frills ? ##
-xmldsig\_js attempts to provide in a simple and convient way nothing more then a valid XMLDSig signature, for situations in which such a signature suffices. This does not exclude further developments providing more advanced signatures, which will have their own repositories.
+xmldsig\_js attempts to provide in a simple and convient way nothing more then a valid XML-Dsig signature, for situations in which such a signature suffices. This does not exclude further developments providing more advanced signatures, which will have their own repositories.
 
 Instead of having Javascript generating and parsing XML, the XML is simply hard-coded and concatenated in order to obtain a satisfactory result in a short time.
 
