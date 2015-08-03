@@ -10,8 +10,8 @@ Include the single minified container, and you're set.
 pkcs11_hwcrypto.init();
 xmldsig_js.set({pkcs11: pkcs11_hwcrypto});
 
-xmldsig_js.sign("Your Text").then(function(Xmldsig) {
-        dosomething(Xmldsig);
+xmldsig_js.sign("Your Text").then(function(SignedXMLDsig) {
+        dosomething(SignedXMLDsig);
         });
 </script>
 ```
@@ -36,9 +36,9 @@ pkcs11_hwcrypto.init();
 xmldsig_js.set({pkcs11: pkcs11_hwcrypto});
 
 var xmldsig_promise = xmldsig_js.sign("Your Text");
-xmldsig_promise.then(function(Xmldsig)
+xmldsig_promise.then(function(SignedXMLDsig)
                         {
-                        dosomething(Xmldsig);
+                        dosomething(SignedXMLDsig);
                         });
 ```
 
