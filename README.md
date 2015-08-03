@@ -1,5 +1,20 @@
 # xmldsig\_js
-No-frills XML-Dsig javascript implementation.
+No-frills XML-Dsig javascript implementation (using javascript Promises).
+
+##tl;dr##
+Include the single minified container, and you're set.
+```html
+<script src="./xmldsig_js_single.min.js"></script>
+
+<script>
+pkcs11_hwcrypto.init();
+xmldsig_js.set({pkcs11: pkcs11_hwcrypto});
+
+xmldsig_js.sign("Your Text").then(function(Xmldsig) {
+        dosomething(Xmldsig);
+        });
+</script>
+```
 
 ## No-frills ? ##
 xmldsig\_js attempts to provide in a simple and convient way nothing more then a valid XML-Dsig signature, for situations in which such a signature suffices. This does not exclude further developments providing more advanced signatures, which will have their own repositories.
@@ -80,7 +95,3 @@ The `hwcrypto` module needs access to a PKCS#11 backend. The Estonian open-eid p
 Note to developers:
 -------------------
 Never trust browser-originating content, verify server-side.
-
-TODO :
------------------------
-- Don't forget a single-file minimized container for easy integration.
