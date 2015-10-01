@@ -13,6 +13,7 @@
                         ,set    : set_params
                         ,sign   : sign_promise
                         ,certificate : get_cert
+                        ,check  : check_p
                         };
 
     function init()
@@ -20,22 +21,36 @@
         if (!window.hwcrypto)
             {
             _log("E hwcrypto not found. Has it been linked ?");
-            throw(hwcrypto_unavailable);
+            return false;
             }
 
         if (!window.hwcrypto.use(defaults.backend))
                 {
                 _log('E hwcrypto failed to select backend');
-                throw(hwcrypto_unavailable);
+                return false;
                 }
 
         window.hwcrypto.debug().then(function(response) {_log("I ",response);});
         }
 
+    function check_p()
+        {
+        return window.hwcrypto.debug().then(
+                    function(response)
+                        {
+                        if (response.indexOf('failing backend') > -1)
+                            return false;
+                        return true;
+                        });
+        }
+
     function set_params(P)
         {
         if (P.backend != null && P.backend != "chrome" && P.backend != "npapi")
+            {
+            _log('E Bad Backend Selected');
             throw "pcks11_bad_backend";
+            }
 
         for (var key in P)
             {

@@ -3,7 +3,7 @@
 var hwcrypto = (function hwcrypto() {
     'use strict';
     var _debug = function(x) {
-        // console.log(x);
+         //console.log(x);
     };
     _debug("hwcrypto.js activated");
     // Fix up IE8
